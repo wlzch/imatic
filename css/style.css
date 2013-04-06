@@ -1,0 +1,46 @@
+@font-face {
+  font-family: 'Underdog';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Underdog'), local('Underdog-Regular'), url(../font/Underdog-Regular.woff) format('woff');
+}
+
+body {
+    background-color: #B3B3B3;
+}
+
+@media screen and (min-width: 768px) {
+    .container {
+        width: 940px;
+        padding: 0 20px;
+        margin: 0 auto;
+    }
+}
+
+.container {
+    width: 100%;
+    max-width: 940px;
+    min-width: 320px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+@media screen and (max-width: 767px) {
+    .container {
+        width: 100%;
+        padding: 0;
+    }
+}
+
+.float-left {
+    float: left;
+}
+
+.float-right {
+    float: right;
+}
+
+.super-center {
+    display: inline-block;
+    vertical-align: middle;
+}

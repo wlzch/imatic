@@ -1,0 +1,58 @@
+.editor {
+  line-height: 480px;
+  text-align: center;
+}
+
+.editor img:before {
+    max-height: 720px;
+    content: "";
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+}
+
+.editor img {
+  max-height: 720px;
+  max-width: 720px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.editor, .tools {
+    background-color: #fff;
+    width: 100%;
+}
+
+.tools ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.tools li {
+    display: inline;
+    margin-right: 10px;
+}
+.tools li img {
+    width: 50px;
+    height: 50px;
+}
+
+@media screen and (min-width: 768px) {
+    .editor {
+        max-height: 720px;
+        min-height: 480px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .editor {
+        background-color: #f4f4f4;
+        width: 100%;
+        min-height: 320px;
+        max-height: 480px;
+    }
+
+    .tools {
+        background-color: #f4f4f4;
+    }
+}
