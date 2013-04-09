@@ -29,6 +29,23 @@ $(function() {
 
         return imageData;
     }
+    Canvas.filters.sepia = function(imageData) {
+        var data = imageData.data;
+        for (var i=0; i < data.length; i+=4) {
+            var d = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+            var r = (d + 39);
+            var g = (d + 14);
+            var b = (d - 36);
+            if (r < 0) r = 0; if (r > 255) r = 255;
+            if (g < 0) g = 0; if (g > 255) g = 255;
+            if (b < 0) b = 0; if (b > 255) b = 255;
+            data[i] = r;
+            data[i+1] = g;
+            data[i+2] = b;
+        }
+
+        return imageData;
+    };
 
     var $canvasContainer = $('.canvas');
     var $canvasInner = $('.canvas-inner');
@@ -56,5 +73,8 @@ $(function() {
     });
     $('#grayscale').click(function() {
         Canvas.runFilter(Canvas.filters.grayscale);
+    });
+    $('#sepia').click(function() {
+        Canvas.runFilter(Canvas.filters.sepia);
     });
 });
