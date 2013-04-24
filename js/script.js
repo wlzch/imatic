@@ -16,6 +16,43 @@ $(function() {
         var data = filter.apply(null, args);
         this.ctx.putImageData(data, 0, 0);
     }
+    Canvas.utils = {};
+    Canvas.utils.convertCoordsToIndex = function(imageData, x, y) {
+        if (x < 0 || x > imageData.width || y < 0 || y > imageData.height) {
+            throw Error('Coords not available');
+        }
+
+        return (y * imageData.width * 4) + (x * 4);
+    };
+    Canvas.utils.getPixel = function(imageData, x, y) {
+        var pos, data;
+        data = imageData.data;
+        try {
+		    pos = Canvas.utils.convertCoordsToIndex(imageData, x, y);
+            return [
+                data[pos],
+                data[pos + 1],
+                data[pos + 2],
+                data[pos + 3]
+            ];
+        } catch (e) {
+            return false;
+        }
+    };
+    Canvas.utils.setPixel = function(imageData, x, y, value) {
+        var data, pos;
+        data = imageData.data;
+        try {
+            pos = Canvas.utils.convertCoordsToIndex(imageData, x, y);
+        } catch (e) {
+            return false;
+        }
+        data[pos] = value[0];
+        data[pos+1] = value[1];
+        data[pos+2] = value[2];
+        data[pos+3] = value[3];
+    };
+
     Canvas.filters = {};
     Canvas.filters.grayscale = function(imageData) {
         var data = imageData.data;
@@ -46,6 +83,43 @@ $(function() {
 
         return imageData;
     };
+    Canvas.filters.blur = function(imageData, radius) {
+        var newImageData, x, y, p, total, value;
+        var pixelsCount, pixel, surroundingPixels, surroundingPixelsLength;
+        newImageData = Canvas.ctx.createImageData(imageData.width, imageData.height);
+        radius = radius || 2;
+        surroundingPixelsLength = 8;
+        for (x = 0, width = imageData.width; x < width; ++x) {
+            for (y = 0, height = imageData.height; y < height; ++y) {
+                pixelsCount= 0;
+                total = [0, 0, 0, 0];//0 => opacity, 1 => red, 2 => green, 3 => blue
+                surroundingPixels = [
+                    [x - 1, y - 1],  // Top left.
+                    [x, y - 1],  // Top middle.
+                    [x + 1, y - 1],  // Top right.
+                    [x - 1, y],  // Middle left.
+                    [x * 1, y],  // Middle right.
+                    [x - 1, y + 1],  // Bottom left.
+                    [x, y + 1],  // Bottom middle.
+                    [x + 1, y + 1]  // Bottom right.
+                ];
+                for (p = 0; p < surroundingPixelsLength; ++p) {
+                    pixel = Canvas.utils.getPixel(imageData, surroundingPixels[p][0], surroundingPixels[p][1]); 
+                    if (pixel) {
+                        total[0] += pixel[0];
+                        total[1] += pixel[1];
+                        total[2] += pixel[2];
+                        total[3] += pixel[3];
+                        ++pixelsCount;
+                    }
+                }
+                value = [total[0]/pixelsCount, total[1]/pixelsCount, total[2]/pixelsCount, total[3]/pixelsCount];
+                Canvas.utils.setPixel(newImageData, x, y, value);
+            }
+        }
+
+        return newImageData;
+    }
 
     var $canvasContainer = $('.canvas');
     var $canvasInner = $('.canvas-inner');
@@ -76,5 +150,8 @@ $(function() {
     });
     $('#sepia').click(function() {
         Canvas.runFilter(Canvas.filters.sepia);
+    });
+    $('#blur').click(function() {
+        Canvas.runFilter(Canvas.filters.blur);
     });
 });
