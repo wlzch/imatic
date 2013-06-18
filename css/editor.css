@@ -67,6 +67,7 @@ body {
 .canvas-inner {
     background-color: #C4C4C4;
     text-align: center;
+    position: relative;
 }
 
 .canvas-inner canvas:before {
@@ -90,4 +91,9 @@ body {
 
 canvas {
     margin-top: -4px;
+}
+
+.select-box {
+    position: absolute;
+    border: 1px dotted;
 }

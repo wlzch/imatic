@@ -1,21 +1,38 @@
 $(function() {
-    var Canvas = {};
+    var Canvas = {}, selectedArea, areaSelect;
     Canvas.ctx = undefined;
     Canvas.getCanvas = function() {
         return this.ctx.canvas;
     };
     Canvas.getImageData = function() {
         var canvas = this.getCanvas();
+        if (selectedArea) {
+          return this.ctx.getImageData(selectedArea.x1, selectedArea.y1, selectedArea.width, selectedArea.height);
+        }
         return this.ctx.getImageData(0, 0, canvas.width, canvas.height);
     };
     Canvas.runFilter = function(filter) {
         var args = [this.getImageData()];
         for (var i = 2; i < arguments.length; i++) {
-            console.log(arguments[i]);
             args.push(arguments[i]);
         }
         var data = filter.apply(null, args);
-        this.ctx.putImageData(data, 0, 0);
+        if (selectedArea) {
+          this.ctx.putImageData(data, selectedArea.x1, selectedArea.y1);
+        } else {
+          this.ctx.putImageData(data, 0, 0);
+        }
+    };
+    Canvas.crop = function() {
+      if (selectedArea) {
+        var canvas = this.getCanvas();
+        var data = this.ctx.getImageData(selectedArea.x1, selectedArea.y1, selectedArea.width, selectedArea.height);
+        this.ctx.putImageData(this.ctx.createImageData(canvas.width, canvas.height), 0, 0);
+        this.ctx.putImageData(data, selectedArea.x1, selectedArea.y1);
+      }
+    }
+    Canvas.resize = function(width, height) {
+      $('canvas').css({width: width, height: height});
     };
     Canvas.utils = {};
     Canvas.utils.convertCoordsToIndex = function(imageData, x, y) {
@@ -98,8 +115,9 @@ $(function() {
         return newImageData;
     };
     Canvas.filters.sepia = function(imageData) {
-        var data = imageData.data;
-        for (var i = 0; i < data.length; i += 4) {
+        var data, d, r, g, b, i;
+        data = imageData.data;
+        for (i = 0; i < data.length; i += 4) {
             var d = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
             var r = (d + 39);
             var g = (d + 14);
@@ -127,11 +145,11 @@ $(function() {
             data[i] = r;
             data[i + 1] = g;
             data[i + 2] = b;
->>>>>>> 485c60b03a5cf768fe0769d0e662a3bfa29e44b1
         }
 
         return imageData;
     };
+    
     Canvas.filters.blur = function(imageData, radius) {
         var newImageData, x, y, p, total, value;
         var pixelsCount, pixel, surroundingPixels, surroundingPixelsLength;
@@ -170,6 +188,26 @@ $(function() {
         return newImageData;
     };
 
+    Canvas.filters.blur = function(imageData) {
+      var data, r, g, b, i, radius, height, width, total, ky, kx, idx;
+      data = imageData.data;
+      radius = 5;
+      for (y = 0, height = imageData.height; y < height; ++x) {
+        for (x = 0, width = imageData.width; x < width; ++x) {
+          idx = ((y*width)+x)*4;
+          total = 0;
+          for (ky = -radius; ky <= radius; ++ky) {
+            for (kx = -radius; kx <= radius; ++kx) {
+              total += data[(((y+ky)*width)+(x+kx)*4)];
+            }
+          }
+          data[((y*width)+x)*4] = total / Math.sqrt(radius * 2 + 1);
+        }
+      }
+
+      return imageData;
+    };
+
     var $canvasContainer = $('.canvas');
     var $canvasInner = $('.canvas-inner');
     var $canvasHeader = $('.canvas-outer h3');
@@ -177,6 +215,7 @@ $(function() {
     $('#file').change(function(e) {
         var file = e.target.files[0];
         loadImage(file, function(canvas) {
+            if (areaSelect) areaSelect.cancelSelection();
             var width = canvas.width;
             var height = canvas.height;
             $canvasHeader.text(file.name.split('.')[0]);
@@ -189,8 +228,17 @@ $(function() {
             }
             $canvasInner.append(canvas);
             Canvas.ctx = canvas.getContext('2d');
+            var selectEnd = function(cvs, selection) {
+              if (selection.width < 5) {
+                selectedArea = null;
+              } else {
+                selectedArea = selection;
+              }
+            }
+            areaSelect = $('canvas').imgAreaSelect({onSelectEnd: selectEnd, instance: true});
         }, {canvas: true, maxWidth: 800, maxHeight: 800, minWidth: 200, minHeight: 200});
     });
+
     $('#open').click(function() {
         $('#file').click();
     });
@@ -211,5 +259,15 @@ $(function() {
     });
     $('#brightness').click(function() {
         Canvas.runFilter(Canvas.filters.brightness);
+    });
+    $('#crop').click(function() {
+        Canvas.crop();
+    });
+    $('#resize').click(function() {
+        var size = prompt("Enter width,height");
+        if (size != null && size != "") {
+          size = size.split(',');
+          Canvas.resize(size[0], size[1]);
+        }
     });
 });
