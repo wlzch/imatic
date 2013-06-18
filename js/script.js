@@ -16,7 +16,7 @@ $(function() {
     for (var i = 2; i < arguments.length; i++) {
       args.push(arguments[i]);
     }
-    var data = filter.apply(null, args);
+    var data = filter.apply(this, args);
     if (selectedArea) {
       this.ctx.putImageData(data, selectedArea.x1, selectedArea.y1);
     } else {
@@ -87,7 +87,7 @@ $(function() {
   Canvas.filters.flipH = function(imageData) {
     var newImageData, x, y, value;
 
-    newImageData = Canvas.ctx.createImageData(imageData.width, imageData.height);
+    newImageData = this.ctx.createImageData(imageData.width, imageData.height);
 
     for (x = 0, width = imageData.width; x < width; ++x) {
       for (y = 0, height = imageData.height; y < height; ++y) {
@@ -102,7 +102,7 @@ $(function() {
   Canvas.filters.flipV = function(imageData) {
     var newImageData, x, y, value;
 
-    newImageData = Canvas.ctx.createImageData(imageData.width, imageData.height);
+    newImageData = this.ctx.createImageData(imageData.width, imageData.height);
 
     for (x = 0, width = imageData.width; x < width; ++x) {
       for (y = 0, height = imageData.height; y < height; ++y) {
@@ -153,9 +153,10 @@ $(function() {
   Canvas.filters.blur = function(imageData, radius) {
     var newImageData, x, y, p, total, value;
     var pixelsCount, pixel, surroundingPixels, surroundingPixelsLength;
-    newImageData = Canvas.ctx.createImageData(imageData.width, imageData.height);
+    newImageData = this.ctx.createImageData(imageData.width, imageData.height);
     radius = radius || 2;
     surroundingPixelsLength = 8;
+
     for (x = 0, width = imageData.width; x < width; ++x) {
       for (y = 0, height = imageData.height; y < height; ++y) {
         pixelsCount = 0;
@@ -186,26 +187,6 @@ $(function() {
     }
 
     return newImageData;
-  };
-
-  Canvas.filters.blur = function(imageData) {
-    var data, r, g, b, i, radius, height, width, total, ky, kx, idx;
-    data = imageData.data;
-    radius = 5;
-    for (y = 0, height = imageData.height; y < height; ++x) {
-      for (x = 0, width = imageData.width; x < width; ++x) {
-        idx = ((y*width)+x)*4;
-        total = 0;
-        for (ky = -radius; ky <= radius; ++ky) {
-          for (kx = -radius; kx <= radius; ++kx) {
-            total += data[(((y+ky)*width)+(x+kx)*4)];
-          }
-        }
-        data[((y*width)+x)*4] = total / Math.sqrt(radius * 2 + 1);
-      }
-    }
-
-    return imageData;
   };
 
   var $canvasContainer = $('.canvas');
