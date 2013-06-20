@@ -189,6 +189,54 @@ $(function() {
     return newImageData;
   };
 
+  Canvas.filters.warp = function(imageData, factor) {
+    var newImageData = this.ctx.createImageData(imageData.width, imageData.height);
+    var width = imageData.width, height = imageData.height;
+    var w = width / 2, h = height / 2;
+    var _twirl = function(px, py) {
+      var x = px - w;
+      var y = py - h;
+      var r = Math.sqrt(x*x + y*y);
+      if (r > w) return {x: px, y: py};
+      var a = Math.atan2(y, x);
+      a += 1 - r / w;
+      var dx = Math.cos(a) * r;
+      var dy = Math.sin(a) * r;
+      return {
+        x: dx + w,
+        y: dy + h
+      }
+    }
+    var colorat = function(imageData, x, y, channel) {
+      return imageData.data[(x+y*height)*4+channel];
+    }
+    var map = [];
+    for (var x = 0; x < width; ++x) {
+      for (var y = 0; y < height; ++y) {
+        var t = _twirl(x, y);
+        map[(x+y*height)*2+0] = Math.max(Math.min(t.x, width - 1), 0);
+        map[(x+y*height)*2+1] = Math.max(Math.min(t.y, height - 1), 0);
+      }
+    }
+    for (var j = 0; j < height; j++) {
+      for (var i = 0; i < width; i++) {
+        var u = map[(i+j*height)*2];
+        var v = map[(i+j*height)*2+1];
+        var x = Math.floor(u);
+        var y = Math.floor(v);
+        var kx = u-x;
+        var ky = v-y;
+        for (var c=0; c<4; c++) {
+            newImageData.data[(i+j*height)*4+c] =
+                (colorat(imageData, x,y  ,c)*(1-kx) + colorat(imageData, x+1,y  ,c)*kx) * (1-ky) +
+                (colorat(imageData, x,y+1,c)*(1-kx) + colorat(imageData, x+1,y+1,c)*kx) * (ky);
+        }
+      }
+    }
+
+    return newImageData;
+  }
+
   var $canvasContainer = $('.canvas');
   var $canvasInner = $('.canvas-inner');
   var $canvasHeader = $('.canvas-outer h3');
@@ -240,6 +288,9 @@ $(function() {
   });
   $('#brightness').click(function() {
     Canvas.runFilter(Canvas.filters.brightness);
+  });
+  $('#warp').click(function() {
+    Canvas.runFilter(Canvas.filters.warp);
   });
   $('#crop').click(function() {
     Canvas.crop();
